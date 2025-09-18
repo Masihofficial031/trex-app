@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<link rel="manifest" href="/manifest.json">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TREX</title>
+<style>
+  :root{
+    --bg:#0f1222; --text:#f2f3f7; --sub:#a9adc2; --card:#171b33; --border:#2a2f52;
+    --brand:#6b4de6; --brand-2:#8f7bff; --ok:#22c55e; --bad:#ef4444; --muted:#8b90a7;
+    --input:#0f1330; --tableHead:#121533; --shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f8fc; --text:#0d102b; --sub:#5a5f7a; --card:#ffffff; --border:#e5e7f2;
+    --brand:#4f46e5; --brand-2:#7c6cff; --ok:#16a34a; --bad:#dc2626; --muted:#6b7280;
+    --input:#f3f4f6; --tableHead:#eef0ff; --shadow:0 10px 30px rgba(0,0,0,.07);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:IRANSans,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px}
+  .appbar{background:linear-gradient(135deg,var(--brand),var(--brand-2));border-bottom:1px solid var(--border);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+  .appbar h1{margin:0;font-size:18px}
+  .toolbar{display:flex;gap:8px;align-items:center}
+  .btn{border:none;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:600}
+  .btn-ghost{background:rgba(255,255,255,.18);color:#fff}
+  .btn-primary{background:var(--brand);color:#fff}
+  .btn-danger{background:var(--bad);color:#fff}
+  .grid{display:grid;gap:16px}
+  @media(min-width:1000px){ .grid-2{grid-template-columns:1.2fr .8fr} }
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+  .card h2{margin:0 0 12px;font-size:16px}
+  .muted{color:var(--muted);font-size:12px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0));border:1px solid var(--border);border-radius:14px;padding:12px}
+  .stat .k{font-size:12px;color:var(--sub)}
+  .stat .v{margin-top:6px;font-size:18px;font-weight:700}
+  .form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end}
+  .form .field{display:flex;flex-direction:column;gap:6px}
+  .form label{font-size:12px;color:var(--sub)}
+  .form input{height:42px;border-radius:10px;border:1px solid var(--border);background:var(--input);color:var(--text);padding:0 10px;outline:none}
+  .form .btn{height:42px}
+  @media(max-width:1000px){.form{grid-template-columns:repeat(2,1fr)} .form .btn-full{grid-column:1/-1}}
+  .table-wrap{border:1px solid var(--border);border-radius:14px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{position:sticky;top:0;background:var(--tableHead);color:var(--text)}
+  th,td{padding:10px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:center}
+  tbody tr:hover{background:rgba(255,255,255,.03)}
+  .chip{padding:4px 9px;border-radius:999px;font-size:12px;font-weight:700;display:inline-block}
+  .buy{background:linear-gradient(135deg,#1ea672,#2bbf82);color:#fff}
+  .sell{background:linear-gradient(135deg,#d93b63,#ff5a7a);color:#fff}
+  .link{background:none;border:none;color:var(--brand-2);cursor:pointer;padding:6px 10px;border-radius:8px}
+  .link:hover{background:rgba(127,127,255,.12)}
+  .footer{margin:20px 0;color:var(--muted);text-align:center;font-size:12px}
+</style>
+</head>
+<body>
+  <header class="appbar">
+    <h1>TREX</h1>
+    <div class="toolbar">
+      <span id="todayTag" class="btn btn-ghost"></span>
+      <button id="themeBtn" class="btn btn-ghost">تغییر تم</button>
+      <button id="resetDayBtn" class="btn btn-ghost">پاک‌سازی امروز</button>
+    </div>
+  </header>
+
+  <div class="wrap grid grid-2">
+    <section class="card">
+      <h2>خلاصهٔ حسابداری امروز</h2>
+      <div class="stats">
+        <div class="stat"><div class="k">موجودی فعلی ($)</div><div class="v" id="invQty">0</div></div>
+        <div class="stat"><div class="k">میانگین بهای تمام‌شده</div><div class="v" id="invAvgCost">—</div></div>
+        <div class="stat"><div class="k">سود/زیان تحقق‌یافته امروز</div><div class="v" id="realizedPnl">0</div></div>
+        <div class="stat"><div class="k">میانگین سود/زیان هر $</div><div class="v" id="pnlPerUsd">0</div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>نرخ روز و ثبت معاملات</h2>
+      <form id="rateForm" class="form" style="margin-bottom:14px">
+        <div class="field">
+          <label>نرخ امروز (IRR)</label>
+          <input type="number" inputmode="numeric" name="rate" placeholder="مثال: 49000" required />
+        </div>
+        <button class="btn btn-primary btn-full" type="submit">ثبت نرخ</button>
+      </form>
+
+      <form id="buyForm" class="form" style="margin-bottom:10px">
+        <div class="field"><label>مقدار خرید ($)</label><input type="number" step="0.01" name="amount" required /></div>
+        <div class="field"><label>نرخ خرید (اختیاری)</label><input type="number" name="rate" /></div>
+        <button class="btn btn-primary btn-full" type="submit">ثبت خرید</button>
+      </form>
+
+      <form id="sellForm" class="form">
+        <div class="field"><label>مقدار فروش ($)</label><input type="number" step="0.01" name="amount" required /></div>
+        <div class="field"><label>نرخ فروش (اختیاری)</label><input type="number" name="rate" /></div>
+        <button class="btn btn-primary btn-full" type="submit">ثبت فروش</button>
+      </form>
+    </section>
+
+    <!-- جداول خرید/فروش/تجمیع -->
+    <section class="card" style="grid-column:1/-1">
+      <h2>خریدها</h2>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>مقدار</th><th>نرخ</th><th>زمان</th><th>عملیات</th></tr></thead><tbody id="buysBody"></tbody></table></div>
+    </section>
+    <section class="card" style="grid-column:1/-1">
+      <h2>فروش‌ها</h2>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>مقدار</th><th>نرخ</th><th>سود/زیان</th><th>زمان</th><th>عملیات</th></tr></thead><tbody id="sellsBody"></tbody></table></div>
+    </section>
+    <section class="card" style="grid-column:1/-1">
+      <h2>تجمیع روز</h2>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>نوع</th><th>مقدار</th><th>نرخ</th><th>سود/زیان</th><th>زمان</th><th>عملیات</th></tr></thead><tbody id="allBody"></tbody></table></div>
+    </section>
+  </div>
+
+  <div class="footer">نرخ واحد – تم دارک/لایت</div>
+
+<script>
+/* === تم === */
+const themeKey='sarafi:theme';
+const root=document.documentElement;
+root.setAttribute('data-theme', localStorage.getItem(themeKey) ?? 'light');
+document.getElementById('themeBtn').onclick=()=>{
+  const cur=root.getAttribute('data-theme');const next=cur==='dark'?'light':'dark';
+  root.setAttribute('data-theme',next);localStorage.setItem(themeKey,next);
+};
+document.getElementById('todayTag').textContent=new Date().toLocaleDateString('fa-IR');
+/* === ذخیره === */
+const store={k:n=>'sarafi:'+n,get(n,fb){try{return JSON.parse(localStorage.getItem(this.k(n)))??fb}catch{return fb}},set(n,v){localStorage.setItem(this.k(n),JSON.stringify(v))}};
+const today=new Date().toISOString().slice(0,10);
+const dayData=store.get('dayData',{});if(!dayData[today])dayData[today]={rate:null,buys:[],sells:[]};const S=dayData[today];
+/* === فرم‌ها === */
+rateForm.onsubmit=e=>{e.preventDefault();S.rate=Number(new FormData(rateForm).get('rate'));persist();renderAll()};
+buyForm.onsubmit=e=>{e.preventDefault();const f=new FormData(buyForm);S.buys.push({amount:+f.get('amount'),rate:+(f.get('rate')||S.rate),time:Date.now()});persist();buyForm.reset();renderAll()};
+sellForm.onsubmit=e=>{e.preventDefault();const f=new FormData(sellForm);S.sells.push({amount:+f.get('amount'),rate:+(f.get('rate')||S.rate),time:Date.now()});persist();sellForm.reset();renderAll()};
+resetDayBtn.onclick=()=>{if(confirm('پاک شود؟')){dayData[today]={rate:S.rate,buys:[],sells:[]};persist();renderAll()}};
+/* === محاسبات === */
+function calc(){let qty=0,cost=0,real=0,pnls={};[...S.buys.map((b,i)=>({...b,kind:'buy',i})),...S.sells.map((s,i)=>({...s,kind:'sell',i}))].sort((a,b)=>a.time-b.time).forEach(ev=>{if(ev.kind==='buy'){let tot=(qty*cost)+(ev.amount*ev.rate);qty+=ev.amount;cost=tot/qty}else{let amt=Math.min(ev.amount,qty);let pnl=amt*(ev.rate-cost);real+=pnl;qty-=amt;pnls[ev.i]=pnl}});return{qty,cost,real,pnls}}
+/* === رندر === */
+function renderAll(){const c=calc();invQty.textContent=c.qty;invAvgCost.textContent=c.qty?Math.round(c.cost):'—';realizedPnl.textContent=Math.round(c.real);realizedPnl.style.color=c.real>=0?'var(--ok)':'var(--bad)';pnlPerUsd.textContent=c.real/(S.sells.reduce((a,s)=>a+s.amount,0)||1);buysBody.innerHTML=S.buys.map((b,i)=>`<tr><td>${i+1}</td><td>${b.amount}</td><td>${b.rate}</td><td>${new Date(b.time).toLocaleTimeString('fa-IR')}</td><td><button class="link" onclick="del('buy',${i})">حذف</button></td></tr>`).join('');sellsBody.innerHTML=S.sells.map((s,i)=>`<tr><td>${i+1}</td><td>${s.amount}</td><td>${s.rate}</td><td style="color:${(c.pnls[i]??0)>=0?'var(--ok)':'var(--bad)'}">${Math.round(c.pnls[i]??0)}</td><td>${new Date(s.time).toLocaleTimeString('fa-IR')}</td><td><button class="link" onclick="del('sell',${i})">حذف</button></td></tr>`).join('');allBody.innerHTML=[...S.buys.map((b,i)=>({...b,kind:'buy',i})),...S.sells.map((s,i)=>({...s,kind:'sell',i}))].sort((a,b)=>a.time-b.time).map((r,j)=>`<tr><td>${j+1}</td><td><span class="chip ${r.kind==='buy'?'buy':'sell'}">${r.kind==='buy'?'خرید':'فروش'}</span></td><td>${r.amount}</td><td>${r.rate}</td><td>${r.kind==='sell'?Math.round(c.pnls[r.i]??0):'—'}</td><td>${new Date(r.time).toLocaleTimeString('fa-IR')}</td><td><button class="link" onclick="del('${r.kind}',${r.i})">حذف</button></td></tr>`).join('')}
+function del(kind,i){if(kind==='buy')S.buys.splice(i,1);else S.sells.splice(i,1);persist();renderAll()}
+function persist(){store.set('dayData',dayData)}
+renderAll();
+</script>
+</body>
+</html>
